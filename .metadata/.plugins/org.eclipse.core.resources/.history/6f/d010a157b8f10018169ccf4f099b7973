@@ -1,0 +1,13 @@
+package com.turvo.objectpool;
+
+public class Calculator {
+	
+	int a;
+	
+	public Calculator(int i) {
+		
+		this.a = i;
+		
+	}
+	
+}

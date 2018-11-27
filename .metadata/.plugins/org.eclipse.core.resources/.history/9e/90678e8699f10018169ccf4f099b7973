@@ -1,0 +1,9 @@
+package com.turvo.objectpool;
+
+public class Calculator {
+	
+	public Calculator(int i) {
+		// TODO Auto-generated constructor stub
+	}
+	
+}

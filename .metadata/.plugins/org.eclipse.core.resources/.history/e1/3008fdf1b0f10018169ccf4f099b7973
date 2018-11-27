@@ -1,0 +1,17 @@
+package com.turvo.objectpool;
+
+import com.turvo.objectpool.Calculator;
+
+public class CalculatorPool extends ObjectPoolService<Calculator> {
+    
+    public CalculatorPool(int minIdle, int maxIdle) {
+		super(minIdle, maxIdle);
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	protected Calculator createObject() {
+        return new Calculator(created() + 1);
+    }
+
+}

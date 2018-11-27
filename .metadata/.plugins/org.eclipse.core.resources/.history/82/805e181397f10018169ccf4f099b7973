@@ -1,0 +1,99 @@
+package com.turvo.objectpool;
+
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+public abstract class ObjectPoolService<T> implements ObjectPool<T>
+{
+    
+    private final int minIdle;
+    private final int maxIdle;
+    private int size;
+    private boolean shutdown = false;
+    
+    private LinkedBlockingQueue<T> objectpool;
+    
+    public ObjectPoolService(final int minIdle, final int maxIdle) {
+        this.minIdle = minIdle;
+        this.maxIdle = maxIdle;
+        initialize(minIdle, maxIdle);
+    }
+
+    public int minIdle() {
+        return minIdle;
+    }
+
+	public int maxIdle() {
+	    return maxIdle;
+	}
+
+	public long expiryInterval() {
+		return 1l;
+	}
+	
+	public int created() {
+	    return size;
+	}
+
+	public int borrowed() {
+	    return size - objectpool.size();
+	}
+	
+	public int availableActive() {
+	    return objectpool.size();
+	}
+	
+	public int availablePassive() {
+	    return maxIdle() - created();
+	}
+	
+	public int availableTotal() {
+	    return maxIdle - borrowed();
+	}
+
+	public T borrowObject() {
+	    if(!shutdown) {
+            populatePool();
+            return objectpool.poll();
+	    } else return null;
+	}
+
+	public T tryBorrowObject(long timeout) {
+	    if(!shutdown) {
+    	    populatePool();
+    	    return objectpool.poll(timeout, TimeUnit.MILLISECONDS);
+	    } else return null;
+	}
+
+    public void releaseObject(T object) {
+        objectpool.add(object);
+        if(shutdown && availableActive() == created()) {
+            objectpool.clear();
+        }
+    }
+
+    public void shutdown() {
+        
+        shutdown = true;
+    }
+
+    protected abstract T createObject();
+
+    public void initialize(final int minIdle, final int maxIdle) {
+        
+        objectpool = new LinkedBlockingQueue<>(maxIdle);
+        
+        for(int i = 0; i < minIdle; i++) {
+            objectpool.add(createObject());
+        }
+        
+        size = minIdle;
+    }
+    
+    private void populatePool() {
+        while(availableActive() < minIdle() && created() < maxIdle()) {
+            objectpool.add(createObject());
+            size++;
+        }
+    }
+}
